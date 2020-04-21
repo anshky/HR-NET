@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def train(config, train_loader, model, criterion, optimizer, epoch,
-          output_dir, tb_log_dir, writer_dict):
+          output_dir, tb_log_dir):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -83,19 +83,13 @@ def train(config, train_loader, model, criterion, optimizer, epoch,
                       data_time=data_time, loss=losses, acc=acc)
             logger.info(msg)
 
-            writer = writer_dict['writer']
-            global_steps = writer_dict['train_global_steps']
-            writer.add_scalar('train_loss', losses.val, global_steps)
-            writer.add_scalar('train_acc', acc.val, global_steps)
-            writer_dict['train_global_steps'] = global_steps + 1
-
             prefix = '{}_{}'.format(os.path.join(output_dir, 'train'), i)
             save_debug_images(config, input, meta, target, pred*4, output,
                               prefix)
 
 
 def validate(config, val_loader, val_dataset, model, criterion, output_dir,
-             tb_log_dir, writer_dict=None):
+             tb_log_dir):
     batch_time = AverageMeter()
     losses = AverageMeter()
     acc = AverageMeter()
@@ -206,33 +200,6 @@ def validate(config, val_loader, val_dataset, model, criterion, output_dir,
         else:
             _print_name_value(name_values, model_name)
 
-        if writer_dict:
-            writer = writer_dict['writer']
-            global_steps = writer_dict['valid_global_steps']
-            writer.add_scalar(
-                'valid_loss',
-                losses.avg,
-                global_steps
-            )
-            writer.add_scalar(
-                'valid_acc',
-                acc.avg,
-                global_steps
-            )
-            if isinstance(name_values, list):
-                for name_value in name_values:
-                    writer.add_scalars(
-                        'valid',
-                        dict(name_value),
-                        global_steps
-                    )
-            else:
-                writer.add_scalars(
-                    'valid',
-                    dict(name_values),
-                    global_steps
-                )
-            writer_dict['valid_global_steps'] = global_steps + 1
 
     return perf_indicator
 
