@@ -40,7 +40,7 @@ def train(config, train_loader, model, criterion, optimizer, epoch,
         data_time.update(time.time() - end)
 
         # compute output
-        outputs = model(input)
+        outputs = model(input.cuda())
 
         target = target.cuda(non_blocking=True)
         target_weight = target_weight.cuda(non_blocking=True)
