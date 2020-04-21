@@ -20,7 +20,6 @@ import torch.optim
 import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
-from tensorboardX import SummaryWriter
 
 import _init_paths
 from config import cfg
@@ -98,22 +97,13 @@ def main():
         os.path.join(this_dir, '../lib/models', cfg.MODEL.NAME + '.py'),
         final_output_dir)
     # logger.info(pprint.pformat(model))
-
-    writer_dict = {
-        'writer': SummaryWriter(log_dir=tb_log_dir),
-        'train_global_steps': 0,
-        'valid_global_steps': 0,
-    }
-
     dump_input = torch.rand(
         (1, 3, cfg.MODEL.IMAGE_SIZE[1], cfg.MODEL.IMAGE_SIZE[0])
     )
-    writer_dict['writer'].add_graph(model, (dump_input, ))
-
     logger.info(get_model_summary(model, dump_input))
 
-    model = torch.nn.DataParallel(model, device_ids=0).cuda()
-
+    #model = torch.nn.DataParallel(model, device_ids= (0)).cuda()
+    model = model.cuda()
     # define loss function (criterion) and optimizer
     criterion = JointsMSELoss(
         use_target_weight=cfg.LOSS.USE_TARGET_WEIGHT
@@ -184,13 +174,13 @@ def main():
 
         # train for one epoch
         train(cfg, train_loader, model, criterion, optimizer, epoch,
-              final_output_dir, tb_log_dir, writer_dict)
+              final_output_dir, tb_log_dir)
 
 
         # evaluate on validation set
         perf_indicator = validate(
             cfg, valid_loader, valid_dataset, model, criterion,
-            final_output_dir, tb_log_dir, writer_dict
+            final_output_dir, tb_log_dir
         )
 
         if perf_indicator >= best_perf:
@@ -216,8 +206,6 @@ def main():
         final_model_state_file)
     )
     torch.save(model.module.state_dict(), final_model_state_file)
-    writer_dict['writer'].close()
-
 
 if __name__ == '__main__':
     main()
